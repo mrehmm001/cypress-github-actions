@@ -1,4 +1,4 @@
-name: Ent-to-end tests
+name: End-to-end tests
 
 on: 
   push:
@@ -12,24 +12,53 @@ jobs:
   cypress-run:
     runs-on: ubuntu-22.04
     permissions:
-          contents: write
-          pull-requests: write
-          repository-projects: write
+      contents: write
+      pull-requests: write
+      repository-projects: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       # Install npm dependencies, cache them correctly
       # and run all Cypress tests
       - name: Cypress run
+        id: cypress
         uses: cypress-io/github-action@v6
-        
-      - name: Write a comment
+
+      # Set status to success or failure
+      - name: Set status to success
+        if: success()
+        id: set-success
+        run: echo "status=success" >> $GITHUB_ENV
+
+      - name: Set status to failure
+        if: failure()
+        id: set-failure
+        run: echo "status=failure" >> $GITHUB_ENV
+
+      # Comment based on the status
+      - name: Write a success comment
+        if: env.status == 'success'
         uses: actions/github-script@v6
         with:
           script: |
+            const issue_number = context.payload.pull_request ? context.payload.pull_request.number : context.payload.issue.number;
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: issue_number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: 'Tests have passed! 🚀'
+            })
+
+      - name: Write a failure comment
+        if: env.status == 'failure'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.payload.pull_request ? context.payload.pull_request.number : context.payload.issue.number;
+            github.rest.issues.createComment({
+              issue_number: issue_number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Tests have failed.'
             })
