@@ -1,4 +1,4 @@
-name: Ent-to-end tests
+name: End-to-end tests
 
 on: [push, pull_request]
 
