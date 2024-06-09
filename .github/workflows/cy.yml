@@ -1,6 +1,6 @@
 name: Ent-to-end tests
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   cypress-run:
